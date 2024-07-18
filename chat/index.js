@@ -1,73 +1,172 @@
-// Initialize PeerJS with your own API key if needed
 const peer = new Peer();
 
-// Display and copy Peer ID
-peer.on('open', (id) => {
-  document.getElementById('peerIdDisplay').textContent = id;
+peer.on('open', id => {
+    console.log('My peer ID is: ' + id);
+    document.getElementById("my-id-input").value = id;
 });
 
-// Function to copy Peer ID to clipboard
-function copyPeerId() {
-  const peerId = document.getElementById('peerIdDisplay').textContent;
-  navigator.clipboard.writeText(peerId).then(() => {
-    alert('Peer ID copied to clipboard');
-  }).catch(err => {
-    console.error('Could not copy text: ', err);
-  });
-}
+let conn;
 
-// Function to connect to a peer
-function connectToPeer() {
-  const peerId = document.getElementById('peerIdInput').value;
-  const conn = peer.connect(peerId);
+document.getElementById('connect-button').addEventListener('click', () => {
+    if(document.getElementById("connect-button").style.backgroundColor == "red")
+      window.location.reload();
 
-  console.log("sad")
+    const peerId = document.getElementById('peer-id-input').value;
+    conn = peer.connect(peerId);
 
-  conn.on('open', () => {
-    console.log("das")
-    document.getElementById('chat-container').classList.remove('hidden');
-    document.getElementById('connect-container').classList.add('hidden');
+    conn.on('open', () => {
+        console.log('Connected to: ' + peerId);
+        displayMessage("System: You have joined!", "green");
+        document.getElementById("peer-id-input").classList.add("disable");
+        document.getElementById("connect-button").innerHTML = "&nbsp&nbsp&nbsp&nbspExit&nbsp&nbsp&nbsp&nbsp";
+        document.getElementById("connect-button").style.backgroundColor = "red";
 
-    // Receive messages
-    conn.on('data', (data) => {
-      appendMessage(data, 'incoming');
+        conn.on('data', data => {
+            if (data.type === 'message') {
+                displayMessage(data.content, "black");
+            } else if (data.type === 'image') {
+                displayImage('Peer', data.content);
+            }
+        });
     });
 
-    // Send messages
-    document.getElementById('messageInput').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        sendMessage();
+    conn.on('close', () => {
+        displayMessage('System: Peer has disconnected', "red");
+    });
+});
+
+document.getElementById('send-button').addEventListener('click', () => {
+    const message = document.getElementById('message-input').value;
+    sendMessage(message, 'message');
+});
+
+document.getElementById('attach-button').addEventListener('click', () => {
+    document.getElementById('file-input').click();
+});
+
+document.getElementById('file-input').addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const imageData = e.target.result;
+            sendMessage(imageData, 'image');
+        };
+        reader.readAsDataURL(file);
+    } else {
+        alert('Please select an image file.');
+    }
+});
+
+peer.on('connection', connection => {
+    conn = connection;
+    document.getElementById("peer-id-input").value = connection.peer;
+    document.getElementById("peer-id-input").classList.add("disable");
+    document.getElementById("connect-button").innerHTML = "&nbsp&nbsp&nbsp&nbspExit&nbsp&nbsp&nbsp&nbsp";
+    document.getElementById("connect-button").style.backgroundColor = "red";
+
+    displayMessage("System: Peer has joined!", "green");
+    conn.on('data', data => {
+        if (data.type === 'message') {
+            displayMessage(data.content, "black");
+        } else if (data.type === 'image') {
+            displayImage('Peer', data.content);
+        }
+    });
+
+    conn.on('close', () => {
+        displayMessage('System: Peer has disconnected!', "red");
+    });
+});
+
+peer.on('disconnected', () => {
+    displayMessage('System: You have been disconnected from the server');
+});
+
+peer.on('close', () => {
+    displayMessage('System: The connection to the server has been closed');
+});
+
+function displayMessage(message, color) {
+    const chatBox = document.getElementById('chat-box');
+    const messageElement = document.createElement('div');
+    messageElement.className = "chat-msg";
+    messageElement.style.color = color;
+    messageElement.textContent = message;
+    chatBox.appendChild(messageElement);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function displayImage(sender, imageData) {
+  const chatBox = document.getElementById('chat-box');
+  const imgContainer = document.createElement('div');
+  imgContainer.className = "chat-msg";
+  imgContainer.style.textAlign = 'left';  // Ensures images are on the left
+  const imgElement = document.createElement('img');
+  imgElement.style.Width = "16rem";
+  imgElement.style.display = "block";  // Ensures images do not flow with text
+  imgElement.src = imageData;
+  const senderMessage = document.createElement('div');
+  senderMessage.textContent = sender + ":";
+  senderMessage.style.fontWeight = 'bold';
+  senderMessage.style.marginBottom = '5px';  // Adds some space between sender and image
+  imgContainer.appendChild(senderMessage);
+  imgContainer.appendChild(imgElement);
+  chatBox.appendChild(imgContainer);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+
+function sendMessage(content, type) {
+  if (conn && conn.open) {
+      content = content.trim(); // Trim leading and trailing whitespace
+
+      if (content !== '') {
+          conn.send({ type: type, content: content });
+          if (type === 'message') {
+              displayMessage("~ " + content, "gray");
+          } else if (type === 'image') {
+              displayImage('Me', content);
+          }
       }
-    });
-  });
-
-  conn.on('error', (err) => {
-    console.error('Connection error:', err);
-    alert('Error connecting to peer. Please check the Peer ID.');
-  });
+      document.getElementById('message-input').value = ''; // Clear input after sending
+  } else {
+    if(content != ''){
+      displayMessage("~ " + content + " ⚠️", "orange");
+    }
+    document.getElementById('message-input').value = ''; // Clear input after sending
+  }
 }
 
-// Function to send a message
-function sendMessage() {
-  const message = document.getElementById('messageInput').value.trim();
-  if (message === '') return;
+// Handle sending message from textarea on Enter key press
+document.getElementById('message-input').addEventListener('keydown', function(event) {
+  if (event.key === 'Enter' && !event.shiftKey) { // Check if Enter is pressed without Shift
+      event.preventDefault(); // Prevent default Enter behavior (submitting the form)
 
-  const conn = peer.connect(document.getElementById('peerIdInput').value);
-  conn.on('open', () => {
-    conn.send(message);
-    appendMessage(message, 'outgoing');
-    document.getElementById('messageInput').value = '';
-  });
+      // Get current value of textarea
+      const currentValue = this.value;
+
+      // Send the message
+      sendMessage(currentValue, 'message');
+  }
+});
+
+// Handle sending message from button click
+document.getElementById('send-button').addEventListener('click', function() {
+  sendMessage(document.getElementById('message-input').value, 'message');
+});
+
+
+
+
+
+function copy() {
+    var input = document.getElementById("my-id-input");
+    input.select();
+    input.setSelectionRange(0, 99999);
+    document.execCommand("copy");
 }
 
-// Function to append messages to the chat
-function appendMessage(message, type) {
-  const messagesDiv = document.getElementById('messages');
-  const messageElem = document.createElement('div');
-  messageElem.classList.add('message', type);
-  messageElem.textContent = message;
-  messagesDiv.appendChild(messageElem);
-
-  // Scroll to bottom
-  messagesDiv.scrollTop = messagesDiv.scrollHeight;
-}
+addEventListener("load", (event) => {
+  document.getElementById('peer-id-input').value = '';
+});

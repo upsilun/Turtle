@@ -1,38 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>🐢 Turtle</title>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-        <link rel="stylesheet" href="index.css">
-    </head>
-    <body>
-        <div class="app">
-            <img class="app-logo" src="https://em-content.zobj.net/source/apple/391/turtle_1f422.png" alt="Turtle Logo">
-            <h1 class="app-title">Turtle</h1>
-            <h2 class="app-subtitle">A platform for direct, and efficient peer-to-peer communication technologies.</h2>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐢 Turtle</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <div class="app">
+        <img class="app-logo" src="https://em-content.zobj.net/source/apple/391/turtle_1f422.png" alt="Turtle Logo">
+        <h1 class="app-title">Turtle</h1>
+        <h2 class="app-subtitle">A platform for direct, and efficient peer-to-peer communication technologies.</h2>
+        <button class="action-buttons" onclick='window.location = "../index.html";' id="chatButton"><i class="bi bi-x"></i><br>Exit</button>
 
-            <div class="container">
-                <div class="connect-container">
-                  <label for="peerIdInput">Enter Peer ID:</label>
-                  <input type="text" id="peerIdInput" placeholder="Peer ID">
-                  <button onclick="connectToPeer()">Connect</button>
-                </div>
-                <div id="chat-container" class="chat-container">
-                  <div class="header">
-                    <h2>P2P Chat</h2>
-                    <br>
-                    <span id="myId">Your ID: <span id="peerIdDisplay"></span><button onclick="copyPeerId()">Copy</button></span>
-                  </div>
-                  <div id="messages" class="messages"></div>
-                  <textarea id="messageInput" placeholder="Type your message..."></textarea>
-                  <button onclick="sendMessage()">Send</button>
-                </div>
-            </div>            
+        <div class="container">
+          <div class="chat-container">
+              <div id="chat-box" class="shadow"></div>
+
+              <input type="file" id="file-input" accept="image/*" class="shadow">
+              <button id="attach-button" class="shadow">Attach Image<br><i class="bi bi-image"></i></button>
+
+
+              <textarea type="text" class="shadow" id="message-input" placeholder="Type a message..."></textarea>
+              <button id="send-button" class="shadow">Send</button>
+          </div>
+          <div class="connection-container">
+              <input type="text" class="shadow" id="peer-id-input" placeholder="Enter peer ID to connect">
+              <button id="connect-button" class="shadow">Connect</button>
+          </div>
+          
+          <div class="connection-container">
+            <input type="text" class="shadow disable" id="my-id-input" placeholder="" style="outline: 3px solid green;">
+            <button id="copy-button" class="shadow" onclick="copy();">&nbsp;&nbsp;&nbsp;Copy&nbsp;&nbsp;&nbsp;</button>
         </div>
+      </div>
 
-        <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
-        <script src="index.js"></script>
-    </body>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <script src="index.js"></script>
+</body>
 </html>
